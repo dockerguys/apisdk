@@ -9,6 +9,23 @@ Make sure you got the following ready:
 - Docker 1.1 or better (see sample guide on installing docker here)
 - An account on docker hub
 
+
+Install docker
+--------------
+This is a simple script to download and install docker on Ubuntu 16.04 LTS. For more options, check out the 
+official docker website.
+
+```bash
+DOCKER_URL="https://download.docker.com/linux/ubuntu/dists/xenial/pool/stable/amd64/docker_ce_18.03.1~ce-0~ubuntu_amd64.deb"
+DOCKER_ADMIN=$(whoami)
+apt install software-properties-common -y
+curl -sSL ${DOCKER_URL} -o /tmp/docker.deb
+dpkg -i /tmp/docker.deb
+apt-get install -y -f
+rm /tmp/docker.deb
+usermod -aG docker ${DOCKER_ADMIN}
+```
+
 Install CLI tools
 -----------------
 Let's install the management tool first.
