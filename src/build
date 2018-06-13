@@ -1,0 +1,65 @@
+#!/bin/sh
+
+PROJECT_NAME=$1
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+OUTPUT_DIR="$SCRIPT_DIR/bin"
+
+if [ "x${PROJECT_NAME}x" = "xx" ]; then
+    echo "You need to specify which project to build!"
+    exit 1
+fi
+
+if [ ! -d "./${PROJECT_NAME}" ]; then
+    echo "Project does not exist!"
+    exit 1
+fi
+
+echo "[+] Entering project directory"
+cd "./${PROJECT_NAME}"
+
+if [ ! -f ./build-config.sh ]; then
+    echo "Build configuration file does not exist."
+    cd ..
+    exit 1
+fi
+
+echo "[+] Reading build configuration"
+eval $(cat ./build-config.sh)
+
+if [ -d ./obj ]; then
+    echo "[+] Removing intermediate directory (obj) from previous build"
+    rm -rf ./obj
+fi
+
+if [ -d ./bin ]; then
+    echo "[+] Removing output directory (bin) from previous build"
+    rm -rf ./bin
+fi
+
+if [ -f ./build-interim.sh ]; then
+    echo "[+] Executing prebuild task"
+    chmod +x ./build-interim.sh
+    ./build-interim.sh
+fi
+
+echo "[+] Starting build..."
+docker build -t "$IMAGE_NAME" ./
+
+if [ -f ./build-post.sh ]; then
+    echo "[+] Executing post build task"
+    chmod +x ./build-post.sh
+    ./build-post.sh
+fi
+
+echo "[+] Saving build output image..."
+mkdir -p "$OUTPUT_DIR"
+docker save -o "$OUTPUT_DIR/$OUTFILE_NAME" "$IMAGE_NAME"
+dir $OUTPUT_DIR
+
+echo "[+] Cleaning up"
+docker rmi "$IMAGE_NAME"
+
+echo "[+] Restoring location"
+cd $SCRIPT_DIR
+
+echo "[+] All done."
